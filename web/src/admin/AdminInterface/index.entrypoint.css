@@ -34,3 +34,7 @@ ak-sidebar-item:active ak-sidebar-item::part(list-item) {
 .pf-c-drawer__panel {
     background-color: transparent !important;
 }
+
+dialog::backdrop {
+    background-color: var(--pf-global--BackgroundColor--dark-transparent-100);
+}

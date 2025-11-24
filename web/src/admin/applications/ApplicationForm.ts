@@ -35,6 +35,7 @@ import { ifDefined } from "lit/directives/if-defined.js";
  * Application Form
  *
  * @prop {string} instancePk - The primary key of the instance to load.
+ * @attr {string} pk - The primary key of the instance to load, reflected as an attribute.
  */
 @customElement("ak-application-form")
 export class ApplicationForm extends WithCapabilitiesConfig(ModelForm<Application, string>) {

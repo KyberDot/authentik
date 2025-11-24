@@ -380,7 +380,7 @@ export class UserListPage extends WithBrandConfig(
                 <ak-user-form defaultPath=${this.activePath} slot="form"> </ak-user-form>
                 <button slot="trigger" class="pf-c-button pf-m-primary">${msg("New User")}</button>
             </ak-forms-modal>
-            <ak-forms-modal .closeAfterSuccessfulSubmit=${false} .cancelText=${msg("Close")}>
+            <ak-forms-modal .closeAfterSuccessfulSubmit=${false} .close-label=${msg("Close")}>
                 <span slot="submit">${msg("Create Service Account")}</span>
                 <span slot="header">${msg("New Service Account")}</span>
                 <ak-user-service-account-form slot="form"> </ak-user-service-account-form>

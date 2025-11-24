@@ -1,10 +1,10 @@
-import "#admin/AdminInterface/AboutModal";
 import "#elements/banner/EnterpriseStatusBanner";
 import "#elements/banner/VersionBanner";
 import "#elements/messages/MessageContainer";
 import "#elements/router/RouterOutlet";
 import "#elements/sidebar/Sidebar";
 import "#elements/sidebar/SidebarItem";
+import "#admin/about/AboutModal";
 
 import {
     createAdminSidebarEnterpriseEntries,
@@ -30,7 +30,6 @@ import {
     renderNotificationDrawerPanel,
 } from "#elements/notifications/utils";
 
-import type { AboutModal } from "#admin/AdminInterface/AboutModal";
 import Styles from "#admin/AdminInterface/index.entrypoint.css";
 import { ROUTES } from "#admin/Routes";
 
@@ -38,7 +37,8 @@ import { CapabilitiesEnum } from "@goauthentik/api";
 
 import { msg } from "@lit/localize";
 import { CSSResult, html, nothing, PropertyValues, TemplateResult } from "lit";
-import { customElement, eventOptions, property, query, state } from "lit/decorators.js";
+import { createRef } from "lit-html/directives/ref.js";
+import { customElement, eventOptions, property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 
 import PFButton from "@patternfly/patternfly/components/Button/button.css";
@@ -62,8 +62,10 @@ export class AdminInterface extends WithCapabilitiesConfig(
 
     //#region Properties
 
-    @query("ak-about-modal")
-    public aboutModal?: AboutModal;
+    #aboutDialogRef = createRef<HTMLDialogElement>();
+    public get aboutDialog(): HTMLDialogElement | null {
+        return this.#aboutDialogRef.value ?? null;
+    }
 
     @property({ type: Boolean, reflect: true, attribute: "sidebar" })
     public sidebarOpen = false;
@@ -201,7 +203,6 @@ export class AdminInterface extends WithCapabilitiesConfig(
                             </div>
                         </div>
                         ${renderNotificationDrawerPanel(this.drawer)}
-                        <ak-about-modal></ak-about-modal>
                     </div>
                 </div>
 
@@ -212,6 +213,7 @@ export class AdminInterface extends WithCapabilitiesConfig(
                     role="button"
                     tabindex="0"
                 ></div>
+                <ak-about-modal id="about-authentik"></ak-about-modal>;
             </div>
         </div>`;
     }

@@ -8,7 +8,7 @@ import { DEFAULT_CONFIG } from "#common/api/config";
 import { dateTimeLocal } from "#common/temporal";
 
 import { Form } from "#elements/forms/Form";
-import { ModalForm } from "#elements/forms/ModalForm";
+import { FormsModal } from "#elements/forms/ModalForm";
 
 import { AKLabel } from "#components/ak-label";
 
@@ -58,7 +58,7 @@ export class ServiceAccountForm extends Form<UserServiceAccountRequest> {
             userServiceAccountRequest: data,
         });
         this.result = result;
-        (this.parentElement as ModalForm).showSubmitButton = false;
+        (this.parentElement as FormsModal).showSubmitButton = false;
         if (this.targetGroup) {
             await new CoreApi(DEFAULT_CONFIG).coreGroupsAddUserCreate({
                 groupUuid: this.targetGroup.pk,
@@ -83,7 +83,10 @@ export class ServiceAccountForm extends Form<UserServiceAccountRequest> {
         this.result = null;
 
         this.expiresAt = new Date(Date.now() + EXPIRATION_DURATION);
-        (this.parentElement as ModalForm).showSubmitButton = true;
+
+        if (this.parentElement instanceof FormsModal) {
+            this.parentElement.showSubmitButton = true;
+        }
     }
 
     //#region Event Listeners

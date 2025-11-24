@@ -229,8 +229,6 @@ export abstract class Form<T = Record<string, unknown>> extends AKElement {
      */
     protected send?(data: T): Promise<unknown>;
 
-    viewportCheck = true;
-
     //#region Properties
 
     @property({ type: String })
@@ -269,19 +267,6 @@ export abstract class Form<T = Record<string, unknown>> extends AKElement {
             }
         `,
     ];
-
-    /**
-     * Called by the render function.
-     *
-     * Blocks rendering the form if the form is not within the
-     * viewport.
-     *
-     * @todo Consider using a observer instead.
-     */
-    public get isInViewport(): boolean {
-        const rect = this.getBoundingClientRect();
-        return rect.x + rect.y + rect.width + rect.height !== 0;
-    }
 
     /**
      * An overridable method for returning a success message after a successful submission.
@@ -559,20 +544,8 @@ export abstract class Form<T = Record<string, unknown>> extends AKElement {
         });
     }
 
-    /**
-     * An overridable method for rendering the form when it is visible.
-     */
-    protected renderVisible(): SlottedTemplateResult {
-        return html`${this.renderHeading()}${this.renderNonFieldErrors()}
-        ${this.renderFormWrapper()}${this.renderActions()}`;
-    }
-
     protected override render(): SlottedTemplateResult {
-        if (this.viewportCheck && !this.isInViewport) {
-            return nothing;
-        }
-
-        return this.renderVisible();
+        return html`${this.renderNonFieldErrors()} ${this.renderFormWrapper()}`;
     }
 
     //#endregion

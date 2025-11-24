@@ -3,87 +3,63 @@ import "#elements/buttons/SpinnerButton/index";
 
 import { EVENT_REFRESH } from "#common/constants";
 
-import { ModalButton } from "#elements/buttons/ModalButton";
-import { ModalHideEvent } from "#elements/controllers/ModalOrchestrationController";
 import { Form } from "#elements/forms/Form";
-import { SlottedTemplateResult } from "#elements/types";
-import { findSlottedInstance } from "#elements/utils/slots";
+import { AKModal } from "#elements/modals/ak-modal";
 
 import { msg } from "@lit/localize";
 import { html, nothing, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { guard } from "lit/directives/guard.js";
+import { customElement, property } from "lit/decorators.js";
 
+/**
+ * Modal specifically designed to host forms.
+ */
 @customElement("ak-forms-modal")
-export class ModalForm extends ModalButton {
-    /**
-     * A required slot containing the form to be displayed in the modal.
-     */
-    protected readonly formSlot: HTMLSlotElement;
-    /**
-     * An optional slot containing the heading of the modal.
-     *
-     * @see {@link renderHeading}
-     */
-    protected readonly headingSlot: HTMLSlotElement;
-
-    /**
-     * An optional slot containing the submit button content.
-     *
-     * @see {@link renderSubmitButton}
-     */
-    protected readonly submitSlot: HTMLSlotElement;
-
-    /**
-     * The heading of the modal.
-     *
-     * This is either provided via the "header" slot or inferred from the slotted form's headline.
-     */
-    @state()
-    protected headingContent: SlottedTemplateResult = null;
-
-    /**
-     * The heading of the modal.
-     *
-     * This is either provided via the "header" slot or inferred from the slotted form's headline.
-     */
-    @state()
-    protected submitButtonContent: SlottedTemplateResult = null;
-
+export class FormsModal extends AKModal {
     //#region Properties
 
-    @property({ type: Boolean })
+    @property({ type: Boolean, attribute: "close-after-submit", useDefault: true })
     public closeAfterSuccessfulSubmit = true;
 
-    @property({ type: Boolean })
+    /**
+     * @deprecated
+     */
+    @property({ type: Boolean, attribute: "show-submit", useDefault: true })
     public showSubmitButton = true;
 
-    @property({ type: Boolean })
+    @property({ type: Boolean, useDefault: true })
     public loading = false;
 
-    @property({ type: String })
-    public cancelText = msg("Cancel");
+    public override closeLabel = msg("Cancel");
 
     //#endregion
 
-    // #region Private methods
+    public get form(): Form | null {
+        const form = this.#defaultSlot.assignedElements().find((el) => el instanceof Form);
+
+        return form ?? null;
+    }
+
+    //#region Private Methods
 
     #confirm = async (): Promise<void> => {
-        const form = findSlottedInstance(Form, this.formSlot);
+        const { form } = this;
 
         if (!form) {
-            throw new Error(msg("No form found"));
+            throw new TypeError(msg("No form found"));
+        }
+
+        if (!(form instanceof Form)) {
+            console.warn("authentik/forms: form inside the form slot is not a Form", form);
+            throw new Error(msg("Element inside the form slot is not a Form"));
         }
 
         if (!form.reportValidity()) {
             this.loading = false;
-            this.locked = false;
 
             return;
         }
 
         this.loading = true;
-        this.locked = true;
 
         const formPromise = form.submit(
             new SubmitEvent("submit", {
@@ -106,129 +82,59 @@ export class ModalForm extends ModalButton {
                         }),
                     );
                 }
-
-                this.loading = false;
-                this.locked = false;
             })
-            .catch((error: unknown) => {
+            .finally(() => {
                 this.loading = false;
-                this.locked = false;
-
-                throw error;
             });
-    };
-
-    #cancel = (): void => {
-        const defaultInvoked = this.dispatchEvent(new ModalHideEvent(this));
-
-        if (defaultInvoked) {
-            this.resetForms();
-        }
-    };
-
-    //#endregion
-
-    //#region Listeners
-
-    #refreshListener = (e: Event): void => {
-        // if the modal should stay open after successful submit, prevent EVENT_REFRESH from bubbling
-        // to the parent components (which would cause table refreshes that destroy the modal)
-        if (!this.closeAfterSuccessfulSubmit) {
-            e.stopPropagation();
-        }
-    };
-
-    #scrollListener = () => {
-        window.dispatchEvent(
-            new CustomEvent("scroll", {
-                bubbles: true,
-            }),
-        );
     };
 
     //#endregion
 
     //#region Lifecycle
 
-    constructor() {
-        super();
+    #defaultSlot = this.ownerDocument.createElement("slot");
 
-        this.formSlot = this.ownerDocument.createElement("slot");
-        this.formSlot.name = "form";
+    public override connectedCallback(): void {
+        super.connectedCallback();
 
-        this.headingSlot = this.ownerDocument.createElement("slot");
-        // TODO: change to heading to match PF5 convention.
-        this.headingSlot.name = "header";
-
-        this.submitSlot = this.ownerDocument.createElement("slot");
-        this.submitSlot.name = "submit";
-
-        this.formSlot.addEventListener("slotchange", () => {
-            const slottedForm = this.hasSlotted("header")
-                ? null
-                : findSlottedInstance(Form, this.formSlot);
-
-            this.headingContent = slottedForm?.headline || null;
-            this.submitButtonContent = slottedForm?.actionLabel || null;
-        });
-
-        this.addEventListener(EVENT_REFRESH, this.#refreshListener);
+        // this.addEventListener(EVENT_REFRESH, this.#refreshListener);
     }
 
     //#endregion
 
     //#region Rendering
 
-    protected renderHeading(): SlottedTemplateResult {
-        return guard([this.headingContent], () => {
-            return html`<header class="pf-c-modal-box__header">
-                <h1 id="modal-title" class="pf-c-modal-box__title">
-                ${this.headingContent || this.headingSlot}</h1>
-            </div>
-        </header>`;
-        });
-    }
-
-    protected renderSubmitButton(): SlottedTemplateResult {
-        return guard([this.showSubmitButton, this.submitButtonContent], () => {
-            if (!this.showSubmitButton) {
-                return nothing;
-            }
-
-            return html`<button
-                type="button"
-                @click=${this.#confirm}
-                class="pf-c-button pf-m-primary"
-                aria-description=${msg("Submit action")}
-            >
-                ${this.submitButtonContent || this.submitSlot}
-            </button>`;
-        });
-    }
-
-    protected renderActions(): SlottedTemplateResult {
-        return html`<fieldset class="pf-c-modal-box__footer">
+    protected renderFormActions(): TemplateResult {
+        return html`<fieldset class="ak-modal__footer">
             <legend class="sr-only">${msg("Form actions")}</legend>
-            ${this.renderSubmitButton()}
+            ${this.showSubmitButton
+                ? html`<button
+                      type="button"
+                      @click=${this.#confirm}
+                      class="pf-c-button pf-m-primary"
+                      aria-description=${msg("Submit action")}
+                  >
+                      <slot name="submit"></slot>
+                  </button>`
+                : nothing}
             <button
                 type="button"
                 aria-description=${msg("Cancel action")}
-                @click=${this.#cancel}
+                @click=${this.closeListener}
                 class="pf-c-button pf-m-secondary"
             >
-                ${this.cancelText}
+                ${this.closeLabel}
             </button>
         </fieldset>`;
     }
 
-    protected override renderModalInner(): TemplateResult {
+    protected override render(): TemplateResult {
         return html`${this.loading
                 ? html`<ak-loading-overlay topmost></ak-loading-overlay>`
                 : nothing}
-            ${this.renderHeading()}
             <slot name="above-form"></slot>
-            <div class="pf-c-modal-box__body" @scroll=${this.#scrollListener}>${this.formSlot}</div>
-            ${this.renderActions()}`;
+            <div class="ak-modal__body">${this.#defaultSlot}</div>
+            ${this.renderFormActions()}`;
     }
 
     //#endregion
@@ -236,6 +142,6 @@ export class ModalForm extends ModalButton {
 
 declare global {
     interface HTMLElementTagNameMap {
-        "ak-forms-modal": ModalForm;
+        "ak-forms-modal": FormsModal;
     }
 }

@@ -102,8 +102,10 @@ export class BoundStagesList extends Table<FlowStageBinding> {
                 <ak-forms-modal>
                     <span slot="submit">${msg("Update")}</span>
                     <span slot="header">${msg("Update Stage binding")}</span>
-                    <ak-stage-binding-form slot="form" .instancePk=${item.pk}>
-                    </ak-stage-binding-form>
+                    <ak-stage-binding-form
+                        slot="form"
+                        .instancePk=${item.pk}
+                    ></ak-stage-binding-form>
                     <button slot="trigger" class="pf-c-button pf-m-secondary">
                         ${msg("Edit Binding")}
                     </button>

@@ -421,7 +421,7 @@ export class RelatedUserList extends WithBrandConfig(WithCapabilitiesConfig(Tabl
                     <li role="presentation">
                         <ak-forms-modal
                             .closeAfterSuccessfulSubmit=${false}
-                            .cancelText=${msg("Close")}
+                            .close-label=${msg("Close")}
                         >
                             <span slot="submit">${msg("Create Service Account")}</span>
                             <span slot="header">${msg("New Service Account")}</span>
